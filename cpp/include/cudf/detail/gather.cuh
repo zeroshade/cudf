@@ -20,6 +20,7 @@
 #include <cudf/detail/null_mask.hpp>
 #include <cudf/detail/utilities/assert.cuh>
 #include <cudf/detail/utilities/cuda.cuh>
+#include <cudf/detail/utilities/stream_pool.hpp>
 #include <cudf/detail/utilities/vector_factories.hpp>
 #include <cudf/detail/valid_if.cuh>
 #include <cudf/dictionary/dictionary_column_view.hpp>
@@ -658,10 +659,19 @@ std::unique_ptr<table> gather(table_view const& source_table,
 {
   std::vector<std::unique_ptr<column>> destination_columns;
 
-  // TODO: Could be beneficial to use streams internally here
+  // The data gather for n columns will be executed over n streams. If there is
+  // only a single column, the fork/join overhead should be avoided.
+  auto const num_columns = source_table.num_columns();
+  auto streams           = std::vector<rmm::cuda_stream_view>{};
+  if (num_columns > 1) {
+    streams = cudf::detail::fork_streams(stream, num_columns);
+  } else {
+    streams.push_back(stream);
+  }
 
-  for (auto const& source_column : source_table) {
-    // The data gather for n columns will be put on the first n streams
+  for (auto i = 0; i < num_columns; ++i) {
+    CUDF_FUNC_RANGE();
+    auto const& source_column = source_table.column(i);
     destination_columns.push_back(
       cudf::type_dispatcher<dispatch_storage_type>(source_column.type(),
                                                    column_gatherer{},
@@ -669,7 +679,7 @@ std::unique_ptr<table> gather(table_view const& source_table,
                                                    gather_map_begin,
                                                    gather_map_end,
                                                    bounds_policy == out_of_bounds_policy::NULLIFY,
-                                                   stream,
+                                                   streams[i],
                                                    mr));
   }
 
@@ -683,6 +693,10 @@ std::unique_ptr<table> gather(table_view const& source_table,
     gather_bitmask(source_table, gather_map_begin, destination_columns, op, stream, mr);
   }
 
+  // Join streams as late as possible so that the gather_bitmask can run on its
+  // own stream while other streams are gathering. Skip joining if only one
+  // column, since it used the passed in stream rather than forking.
+  if (num_columns > 1) { cudf::detail::join_streams(streams, stream); }
   return std::make_unique<table>(std::move(destination_columns));
 }
 
