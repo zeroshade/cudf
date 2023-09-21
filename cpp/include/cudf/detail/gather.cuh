@@ -657,31 +657,32 @@ std::unique_ptr<table> gather(table_view const& source_table,
                               rmm::cuda_stream_view stream,
                               rmm::mr::device_memory_resource* mr)
 {
-  std::vector<std::unique_ptr<column>> destination_columns;
+  auto const num_columns = source_table.num_columns();
+  auto result            = std::vector<std::unique_ptr<column>>(num_columns);
 
   // The data gather for n columns will be executed over n streams. If there is
   // only a single column, the fork/join overhead should be avoided.
-  auto const num_columns = source_table.num_columns();
-  auto streams           = std::vector<rmm::cuda_stream_view>{};
+  auto streams = std::vector<rmm::cuda_stream_view>{};
   if (num_columns > 1) {
     streams = cudf::detail::fork_streams(stream, num_columns);
   } else {
     streams.push_back(stream);
   }
 
-  for (auto i = 0; i < num_columns; ++i) {
-    CUDF_FUNC_RANGE();
+  auto it = thrust::make_counting_iterator<size_type>(0);
+
+  std::transform(it, it + num_columns, result.begin(), [&](size_type i) {
     auto const& source_column = source_table.column(i);
-    destination_columns.push_back(
-      cudf::type_dispatcher<dispatch_storage_type>(source_column.type(),
-                                                   column_gatherer{},
-                                                   source_column,
-                                                   gather_map_begin,
-                                                   gather_map_end,
-                                                   bounds_policy == out_of_bounds_policy::NULLIFY,
-                                                   streams[i],
-                                                   mr));
-  }
+    return cudf::type_dispatcher<dispatch_storage_type>(
+      source_column.type(),
+      column_gatherer{},
+      source_column,
+      gather_map_begin,
+      gather_map_end,
+      bounds_policy == out_of_bounds_policy::NULLIFY,
+      streams[i],
+      mr);
+  });
 
   auto const nullable = bounds_policy == out_of_bounds_policy::NULLIFY ||
                         std::any_of(source_table.begin(), source_table.end(), [](auto const& col) {
@@ -690,14 +691,15 @@ std::unique_ptr<table> gather(table_view const& source_table,
   if (nullable) {
     auto const op = bounds_policy == out_of_bounds_policy::NULLIFY ? gather_bitmask_op::NULLIFY
                                                                    : gather_bitmask_op::DONT_CHECK;
-    gather_bitmask(source_table, gather_map_begin, destination_columns, op, stream, mr);
+    gather_bitmask(source_table, gather_map_begin, result, op, stream, mr);
   }
 
-  // Join streams as late as possible so that the gather_bitmask can run on its
-  // own stream while other streams are gathering. Skip joining if only one
-  // column, since it used the passed in stream rather than forking.
+  // Join streams as late as possible so that null mask computations can run on
+  // the passed in stream while other streams are gathering. Skip joining if
+  // only one column, since it used the passed in stream rather than forking.
   if (num_columns > 1) { cudf::detail::join_streams(streams, stream); }
-  return std::make_unique<table>(std::move(destination_columns));
+
+  return std::make_unique<table>(std::move(result));
 }
 
 }  // namespace detail
