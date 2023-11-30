@@ -63,7 +63,7 @@ bool column_types_equivalent(column_view const& lhs, column_view const& rhs);
 template <typename ForwardIt>
 inline bool all_column_types_equal(ForwardIt first, ForwardIt last)
 {
-  return std::adjacent_find(first, last, cudf::column_types_equal) == last;
+  return std::all_of(std::next(first), last, [want = *first](auto const& c) { return cudf::column_types_equal(want, c); }))
 }
 
 }  // namespace cudf
