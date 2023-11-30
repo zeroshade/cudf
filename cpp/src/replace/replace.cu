@@ -48,6 +48,7 @@
 #include <cudf/strings/detail/strings_children.cuh>
 #include <cudf/utilities/default_stream.hpp>
 #include <cudf/utilities/error.hpp>
+#include <cudf/utilities/type_checks.hpp>
 #include <cudf/utilities/type_dispatcher.hpp>
 
 #include <rmm/cuda_stream_view.hpp>
@@ -509,7 +510,7 @@ std::unique_ptr<cudf::column> find_and_replace_all(cudf::column_view const& inpu
                "values_to_replace and replacement_values size mismatch.");
 
   CUDF_EXPECTS(
-    input_col.type() == values_to_replace.type() && input_col.type() == replacement_values.type(),
+    cudf::column_types_equal(input_col, values_to_replace) && cudf::column_types_equal(input_col, replacement_values),
     "Columns type mismatch");
   CUDF_EXPECTS(not values_to_replace.has_nulls(), "values_to_replace must not have nulls");
 

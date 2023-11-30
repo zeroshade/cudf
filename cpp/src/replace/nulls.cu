@@ -38,6 +38,7 @@
 #include <cudf/utilities/default_stream.hpp>
 #include <cudf/utilities/error.hpp>
 #include <cudf/utilities/traits.hpp>
+#include <cudf/utilities/type_checks.hpp>
 #include <cudf/utilities/type_dispatcher.hpp>
 
 #include <rmm/cuda_stream_view.hpp>
@@ -305,6 +306,8 @@ struct replace_nulls_scalar_kernel_forwarder {
                                            rmm::cuda_stream_view stream,
                                            rmm::mr::device_memory_resource* mr)
   {
+    // TODO: Need some utility like cudf::column_types_equivalent for scalars to
+    // ensure nested types are handled correctly.
     CUDF_EXPECTS(input.type() == replacement.type(), "Data type mismatch");
     std::unique_ptr<cudf::column> output = cudf::detail::allocate_like(
       input, input.size(), cudf::mask_allocation_policy::NEVER, stream, mr);
@@ -341,6 +344,8 @@ std::unique_ptr<cudf::column> replace_nulls_scalar_kernel_forwarder::operator()<
   rmm::cuda_stream_view stream,
   rmm::mr::device_memory_resource* mr)
 {
+  // TODO: Need some utility like cudf::column_types_equivalent for scalars to
+  // ensure nested types are handled correctly.
   CUDF_EXPECTS(input.type() == replacement.type(), "Data type mismatch");
   cudf::strings_column_view input_s(input);
   cudf::string_scalar const& repl = static_cast<cudf::string_scalar const&>(replacement);
@@ -407,7 +412,7 @@ std::unique_ptr<cudf::column> replace_nulls(cudf::column_view const& input,
                                             rmm::cuda_stream_view stream,
                                             rmm::mr::device_memory_resource* mr)
 {
-  CUDF_EXPECTS(input.type() == replacement.type(), "Data type mismatch");
+  CUDF_EXPECTS(cudf::column_types_equal(input, replacement), "Data type mismatch");
   CUDF_EXPECTS(replacement.size() == input.size(), "Column size mismatch");
 
   if (input.is_empty()) { return cudf::empty_like(input); }

@@ -200,9 +200,7 @@ std::unique_ptr<column> concatenate_rows(table_view const& input,
                 [](column_view const& col) { return col.type().id() == cudf::type_id::LIST; }),
     "All columns of the input table must be of lists column type.");
   CUDF_EXPECTS(
-    std::all_of(std::next(input.begin()),
-                input.end(),
-                [a = *input.begin()](column_view const& b) { return column_types_equal(a, b); }),
+    cudf::all_column_types_equal(input.begin(), input.end()),
     "The types of entries in the input columns must be the same.");
 
   auto const num_rows = input.num_rows();

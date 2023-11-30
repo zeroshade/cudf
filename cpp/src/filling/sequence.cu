@@ -127,6 +127,8 @@ std::unique_ptr<column> sequence(size_type size,
                                  rmm::cuda_stream_view stream,
                                  rmm::mr::device_memory_resource* mr)
 {
+  // TODO: Need some utility like cudf::column_types_equivalent for scalars to
+  // ensure nested types are handled correctly.
   CUDF_EXPECTS(init.type() == step.type(), "init and step must be of the same type.");
   CUDF_EXPECTS(size >= 0, "size must be >= 0");
   CUDF_EXPECTS(is_numeric(init.type()), "Input scalar types must be numeric");

@@ -17,6 +17,8 @@
 
 #include <cudf/column/column_view.hpp>
 
+#include <algorithm>
+
 namespace cudf {
 
 /**
@@ -46,5 +48,21 @@ bool column_types_equal(column_view const& lhs, column_view const& rhs);
  * @return true if column types match
  */
 bool column_types_equivalent(column_view const& lhs, column_view const& rhs);
+
+/**
+ * @brief Compare the types of a range of `column_views`
+ *
+ * This function returns true if cudf::column_types_equal is true for every
+ * pair of consecutive columns in the range.
+ *
+ * @tparam ForwardIt Forward iterator
+ * @param first The first column
+ * @param last The last column
+ * @return true if all column types match
+ */
+template <typename ForwardIt>
+inline bool all_column_types_equal(ForwardIt first, ForwardIt last) {
+  return std::adjacent_find(first, last, cudf::column_types_equal) == last;
+}
 
 }  // namespace cudf

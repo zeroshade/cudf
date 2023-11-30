@@ -111,6 +111,8 @@ std::unique_ptr<column> segmented_reduce(column_view const& segmented_values,
                                          rmm::cuda_stream_view stream,
                                          rmm::mr::device_memory_resource* mr)
 {
+  // TODO: Need some utility like cudf::column_types_equivalent for scalars to
+  // ensure nested types are handled correctly.
   CUDF_EXPECTS(!init.has_value() || segmented_values.type() == init.value().get().type(),
                "column and initial value must be the same type");
   if (init.has_value() && !(agg.kind == aggregation::SUM || agg.kind == aggregation::PRODUCT ||

@@ -17,6 +17,7 @@
 
 #include <cudf/column/column_view.hpp>
 #include <cudf/types.hpp>
+#include <cudf/utilities/type_checks.hpp>
 
 #include <algorithm>
 #include <vector>
@@ -375,7 +376,7 @@ inline bool have_same_types(table_view const& lhs, table_view const& rhs)
     lhs.end(),
     rhs.begin(),
     rhs.end(),
-    [](column_view const& lcol, column_view const& rcol) { return (lcol.type() == rcol.type()); });
+    [](column_view const& lcol, column_view const& rcol) { return cudf::column_types_equal(lcol, rcol); });
 }
 
 /**
