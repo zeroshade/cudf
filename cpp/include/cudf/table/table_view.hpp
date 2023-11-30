@@ -371,12 +371,13 @@ std::vector<column_view> get_nullable_columns(table_view const& table);
  */
 inline bool have_same_types(table_view const& lhs, table_view const& rhs)
 {
-  return std::equal(
-    lhs.begin(),
-    lhs.end(),
-    rhs.begin(),
-    rhs.end(),
-    [](column_view const& lcol, column_view const& rcol) { return cudf::column_types_equal(lcol, rcol); });
+  return std::equal(lhs.begin(),
+                    lhs.end(),
+                    rhs.begin(),
+                    rhs.end(),
+                    [](column_view const& lcol, column_view const& rcol) {
+                      return cudf::column_types_equal(lcol, rcol);
+                    });
 }
 
 /**

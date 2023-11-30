@@ -61,7 +61,8 @@ bool column_types_equivalent(column_view const& lhs, column_view const& rhs);
  * @return true if all column types match
  */
 template <typename ForwardIt>
-inline bool all_column_types_equal(ForwardIt first, ForwardIt last) {
+inline bool all_column_types_equal(ForwardIt first, ForwardIt last)
+{
   return std::adjacent_find(first, last, cudf::column_types_equal) == last;
 }
 

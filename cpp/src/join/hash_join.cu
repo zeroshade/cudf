@@ -568,8 +568,7 @@ hash_join<Hasher>::compute_hash_join(cudf::table_view const& probe,
                      std::make_unique<rmm::device_uvector<size_type>>(0, stream, mr));
   }
 
-  CUDF_EXPECTS(cudf::have_same_types(_build, probe),
-               "Mismatch in joining column data types");
+  CUDF_EXPECTS(cudf::have_same_types(_build, probe), "Mismatch in joining column data types");
 
   return probe_join_indices(probe, join, output_size, stream, mr);
 }
