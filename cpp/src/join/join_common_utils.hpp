@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2019-2023, NVIDIA CORPORATION.
+ * Copyright (c) 2019-2024, NVIDIA CORPORATION.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -56,7 +56,7 @@ using mixed_multimap_type = cuco::static_multimap<hash_value_type,
                                                   hash_table_allocator_type,
                                                   cuco::double_hashing<1, hash_type, hash_type>>;
 
-using semi_map_type = cuco::
+using semi_map_type = cuco::legacy::
   static_map<hash_value_type, size_type, cuda::thread_scope_device, hash_table_allocator_type>;
 
 using row_hash_legacy =
