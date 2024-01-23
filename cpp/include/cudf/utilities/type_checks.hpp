@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2021-2023, NVIDIA CORPORATION.
+ * Copyright (c) 2021-2024, NVIDIA CORPORATION.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -63,7 +63,8 @@ bool column_types_equivalent(column_view const& lhs, column_view const& rhs);
 template <typename ForwardIt>
 inline bool all_column_types_equal(ForwardIt first, ForwardIt last)
 {
-  return std::all_of(std::next(first), last, [want = *first](auto const& c) { return cudf::column_types_equal(want, c); }))
+  return std::all_of(std::next(first), last, [want = *first](auto const& c) {
+    return cudf::column_types_equal(want, c); }))
 }
 
 }  // namespace cudf
