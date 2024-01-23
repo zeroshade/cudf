@@ -1,4 +1,4 @@
-# SPDX-FileCopyrightText: Copyright (c) 2023 NVIDIA CORPORATION & AFFILIATES.
+# SPDX-FileCopyrightText: Copyright (c) 2023-2024 NVIDIA CORPORATION & AFFILIATES.
 # All rights reserved.
 # SPDX-License-Identifier: Apache-2.0
 import copyreg
@@ -707,6 +707,14 @@ Resampler = make_intermediate_proxy_type(
     "Resampler", cudf.core.resample._Resampler, pd_Resampler
 )
 
+DataFrameResampler = make_intermediate_proxy_type(
+    "DataFrameResampler", cudf.core.resample.DataFrameResampler, pd_Resampler
+)
+
+SeriesResampler = make_intermediate_proxy_type(
+    "SeriesResampler", cudf.core.resample.SeriesResampler, pd_Resampler
+)
+
 StataReader = make_intermediate_proxy_type(
     "StataReader",
     _Unusable,
@@ -1023,6 +1031,15 @@ DateOffset = make_final_proxy_type(
     "DateOffset",
     _Unusable,
     pd.offsets.DateOffset,
+    fast_to_slow=_Unusable(),
+    slow_to_fast=_Unusable(),
+    additional_attributes={"__hash__": _FastSlowAttribute("__hash__")},
+)
+
+BaseOffset = make_final_proxy_type(
+    "BaseOffset",
+    _Unusable,
+    pd.offsets.BaseOffset,
     fast_to_slow=_Unusable(),
     slow_to_fast=_Unusable(),
     additional_attributes={"__hash__": _FastSlowAttribute("__hash__")},
